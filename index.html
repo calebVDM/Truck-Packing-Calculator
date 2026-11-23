@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cart Packing Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: friendly grower's order desk — clear, practical, a little warm.
+   IDEA: the loading dock — carts of flats rolling onto a truck.
+   PICTURE: side-view trucks whose trailer floor is a grid of cart slots, filled live by product group.
+   COLOUR and TYPE: deep greenhouse green band, white ground, tomato accent; Fraunces titles + Figtree.
+   LAYOUT: green band with live result + trucks; below, product list beside a sticky order summary. */
+:root{color-scheme:light dark;--bg:#ffffff;--ink:#13261c;--muted:#566a5e;--band:#17432d;--line:#e0e7e3;--card:#f3f7f4;--accent:#d9452b;--s0:#2a78d6;--s1:#eb6834;--s2:#1baf7a;--s3:#eda100;--s4:#e87ba4;--s5:#008300;--s6:#6250d6;--s7:#e34948;
+
+
+
+
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1813;--ink:#e8f0eb;--muted:#a7b7ad;--band:#0b2618;--line:#24372c;--card:#14231b;--accent:#ff7a5c;--s0:#3987e5;--s1:#d95926;--s2:#199e70;--s3:#c98500;--s4:#d55181;--s5:#0ca30c;--s6:#9085e9;--s7:#e66767}}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark;--bg:#0e1813;--ink:#e8f0eb;--muted:#a7b7ad;--band:#0b2618;--line:#24372c;--card:#14231b;--accent:#ff7a5c;--s0:#3987e5;--s1:#d95926;--s2:#199e70;--s3:#c98500;--s4:#d55181;--s5:#0ca30c;--s6:#9085e9;--s7:#e66767}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Figtree,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(28px,4vw,56px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1,h2{font-family:Fraunces,Georgia,serif;font-weight:600;line-height:1.05;text-wrap:balance;margin:0}
+.hero{background:var(--band);color:#f2f7f3}
+.hero .kicker{font-size:15px;opacity:.8;margin:0 0 8px}
+.hero h1{font-size:clamp(32px,4.6vw,52px)}
+.hero h1 b{color:#ffd28a;font-weight:600;white-space:nowrap}
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 32px;align-items:end}
+.stats{display:flex;flex-wrap:wrap;gap:12px 32px;margin-top:20px}
+.stat span{display:block;font-size:14px;opacity:.75}.stat strong{font-size:24px;font-weight:600;white-space:nowrap}
+.seg{display:inline-flex;background:rgba(255,255,255,.1);border-radius:999px;padding:4px}
+.seg button{all:unset;cursor:pointer;padding:0 16px;min-height:40px;display:flex;align-items:center;border-radius:999px;font-size:15px;color:#f2f7f3}
+.seg button[aria-pressed=true]{background:#f2f7f3;color:#17432d;font-weight:600}
+.seg button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ffd28a;outline-offset:2px}
+.fig{position:relative;margin-top:24px}
+#trucks{display:block;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:14px}
+.legend i,.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:baseline}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;align-items:start}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:0 14px;min-height:40px;font:inherit;font-size:14px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.search{flex:1 1 200px;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink)}
+.grp h2{font-size:22px;margin:28px 0 6px;display:flex;align-items:center;gap:4px}
+.grp h2 small{font:500 14px Figtree,sans-serif;color:var(--muted);margin-left:auto;white-space:nowrap}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 150px 150px;gap:6px 16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.row .nm{font-weight:600}.row .meta{font-size:13px;color:var(--muted)}
+.ctb{display:inline-block;vertical-align:2px;margin-left:8px;padding:1px 7px;border-radius:4px;background:#d52b1e;color:#fff;font-size:11px;font-weight:600;line-height:16px;white-space:nowrap}img.ctb{height:20px;width:auto;padding:0;background:none;vertical-align:-3px}
+img.pwb{height:24px;width:auto;margin-left:8px;vertical-align:-6px;background:#fff;border-radius:3px;padding:1px 2px}
+.row.on .nm::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:8px;vertical-align:middle}
+.step{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.step button{width:40px;min-height:44px;border:0;background:var(--card);color:var(--ink);font-size:20px;cursor:pointer}
+.step input{width:100%;border:0;text-align:center;font:inherit;font-size:16px;background:var(--bg);color:var(--ink);-moz-appearance:textfield}
+.step input::-webkit-inner-spin-button{-webkit-appearance:none}
+.out{text-align:right;font-variant-numeric:tabular-nums}
+.out b{display:block;white-space:nowrap}.out span{font-size:13px;color:var(--muted);display:block}
+.mini{grid-column:1/-1;height:4px;border-radius:2px;background:var(--line);overflow:hidden;display:none}
+.row.on .mini{display:block}.mini i{display:block;height:100%;border-radius:2px}
+.side{position:sticky;top:16px;background:var(--card);border-radius:16px;padding:22px}
+.side h2{font-size:24px;margin-bottom:12px}
+.bar{display:flex;gap:2px;height:28px;border-radius:6px;overflow:hidden;background:var(--line)}
+.bar i{display:block;height:100%;cursor:default}
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
+td{padding:6px 0;border-top:1px solid var(--line)}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:10px}
+tfoot td{font-weight:600}
+.tip-box{margin-top:18px;padding:14px;border-radius:12px;background:var(--bg);font-size:15px}
+.tip-box p{margin:0 0 10px}
+.fill{display:flex;gap:8px;flex-wrap:wrap}
+.fill select{flex:1 1 160px;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:0 10px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink)}
+.btn{min-height:44px;padding:0 16px;border:0;border-radius:10px;background:var(--accent);color:#fff;font:600 15px Figtree,sans-serif;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:default}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.note{font-size:13px;color:var(--muted);margin-top:14px}
+.cust{grid-column:1/-1;background:var(--card);border-radius:16px;padding:22px}
+.cust h2{font-size:24px}.cust .sub{margin:6px 0 14px;color:var(--muted);font-size:15px}
+.who{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.who em{font-style:normal;font-size:12px;color:var(--accent)}
+.who input.bad{border-color:var(--accent);box-shadow:0 0 0 2px rgba(217,69,43,.3)}
+.for{margin:-6px 0 12px;font-size:15px}.for.none{color:var(--muted)}.for a{color:inherit}
+
+.who h3{grid-column:1/-1;margin:0;font:600 17px Figtree,sans-serif}
+.who label{display:grid;gap:3px;font-size:13px;color:var(--muted)}.who .wide{grid-column:1/-1}
+.who input,.who textarea,.who select{min-height:44px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink);resize:vertical}
+a.btn{display:inline-flex;align-items:center;text-decoration:none}.btn.dark{background:var(--ink);color:var(--bg)}
+#sendNote:empty{display:none}#sendNote{color:var(--ink)}
+@media(max-width:900px){.who{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:420px){.who{grid-template-columns:minmax(0,1fr)}}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;padding:6px 10px;border-radius:8px;opacity:0;transition:opacity .1s;z-index:9;white-space:nowrap}
+.empty{color:var(--muted);padding:24px 0}
+@media(max-width:900px){.main{grid-template-columns:minmax(0,1fr)}.side{position:static}}
+.mbar{display:none}
+@media(max-width:900px){.mbar.on{display:flex;position:fixed;left:10px;right:10px;bottom:10px;z-index:8;justify-content:space-between;align-items:center;gap:12px;min-height:52px;padding:0 16px;border-radius:14px;background:var(--band);color:#f2f7f3;text-decoration:none;font-size:15px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.mbar b{white-space:nowrap}.mbar span{font-variant-numeric:tabular-nums}body{padding-bottom:72px}}
+@media(max-width:600px){.top{grid-template-columns:minmax(0,1fr)}.row{grid-template-columns:minmax(0,1fr) 112px}.row .step{grid-column:1/-1;grid-row:2}.stat strong{font-size:20px}}
+@media(prefers-reduced-motion:no-preference){.bar i,.mini i{transition:flex-grow .3s,width .3s}}
+</style>
+</head>
+<body>
+<header class="hero band"><div class="wrap">
+  <div class="top">
+    <div>
+      <p class="kicker">Cart packing calculator</p>
+      <h1 id="headline">Your order fills …</h1>
+    </div>
+    <div class="seg" role="group" aria-label="Truck size">
+      <button type="button" data-truck="20" aria-pressed="true">5 ton · 20 carts</button>
+      <button type="button" data-truck="40" aria-pressed="false">Dry van · 40 carts</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><span>Order value</span><strong id="sValue">$0</strong></div>
+    <div class="stat"><span>Carts</span><strong id="sCarts">0</strong></div>
+    <div class="stat"><span>Trucks</span><strong id="sTrucks">0</strong></div>
+    <div class="stat"><span>Space left on last truck</span><strong id="sLeft">0 carts</strong></div>
+  </div>
+  <div class="fig"><svg id="trucks" role="img" aria-label="Trucks with cart slots filled by product group"></svg></div>
+  <div class="legend" id="legend"></div>
+</div></header>
+
+<main class="band"><div class="wrap main">
+  <section class="cust" aria-labelledby="custH">
+    <h2 id="custH">Customer details</h2>
+    <p class="sub">Who is this order for? Your name and store are added to every order you email or download.</p>
+    <form class="who" id="who" autocomplete="on">
+      <label><span>Name <em>required</em></span><input name="name" autocomplete="name" required></label>
+      <label><span>Store or business <em>required</em></span><input name="business" autocomplete="organization" required></label>
+      <label>Phone<input name="phone" type="tel" autocomplete="tel"></label>
+      <label>Email<input name="email" type="email" autocomplete="email"></label>
+      <label>Delivery week<select name="week" id="weekSel"><option value="">Choose a week</option></select></label>
+      <label>Notes<input name="notes"></label>
+    </form>
+  </section>
+  <section aria-label="Products">
+    <div class="tools">
+      <input class="search" id="q" type="search" placeholder="Search plants…" aria-label="Search plants">
+      <button class="chip" id="onlyMine" type="button" aria-pressed="false">In my order</button>
+      <button class="chip" id="onlyCT" type="button" aria-pressed="false">Canadian Tire items</button>
+    </div>
+    <div class="tools" id="chips"></div>
+    <div id="list"></div>
+  </section>
+  <aside class="side" id="summary" aria-label="Order summary">
+    <h2>Your order</h2>
+    <p class="for" id="orderFor"></p>
+    <div class="bar" id="bar" aria-hidden="true"></div>
+    <table><tbody id="sumRows"></tbody><tfoot><tr><td>Total</td><td class="n" id="fCarts"></td><td class="n" id="fValue"></td></tr></tfoot></table>
+    <div class="tip-box" id="advice"></div>
+    <div class="acts">
+      <a class="btn" id="mail" href="#">Email order</a>
+      <button class="btn dark" id="xlsx" type="button">Download .xlsx</button>
+      <button class="btn ghost" id="copy" type="button">Copy order summary</button>
+      <button class="btn ghost" id="clear" type="button">Clear order</button>
+    </div>
+    <p class="note" id="sendNote" role="status"></p>
+    <p class="note">Quantities go by the full shelf: the + and − buttons add or remove one shelf, and typed amounts round up to the next full shelf. In/Out carts are sold by the whole cart, minimum one cart. Cart counts are estimates based on standard cart loads; Real plant sizes may change overall cart quantities. We will call before shipping if there are any adjustments.</p>
+    <p class="note"><strong>TEST USE ONLY</strong></p>
+  </aside>
+</div></main>
+<a class="mbar" id="mbar" href="#summary"><span id="mbarTxt"></span><b>Review &amp; send ↓</b></a>
+<div id="tip" role="tooltip"></div>
+
+<script>
+window.addEventListener('error',function(e){var b=document.getElementById('errbox');if(!b){b=document.createElement('div');b.id='errbox';b.setAttribute('role','alert');b.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:99;background:#fff3f0;color:#7a1c0c;border:2px solid #d9452b;border-radius:10px;padding:10px 12px;font:14px/1.4 system-ui,sans-serif';document.body.appendChild(b)}b.textContent='Something went wrong loading the calculator. Please send this message to your sales rep: '+(e.message||'error')+' (line '+(e.lineno||'?')+')';});
+</script>
+<script>
+{
+const GROUPS=['4" & 4.5" pots','5" pots','Quarts & gallons','6 packs','Hanging baskets','Planters','Coco baskets','In/Out carts'];
+// [name, units per flat, units per shelf, units per cart, price per unit, group]
+// Items grown under the Canadian Tire program (sheet column "Item Program").
+const CT=["4\" Geranium", "5\" OPV Annual", "10\" Strawberry Hanging Basket", "12\" OPV Hanging Basket", "12\" OPV Planter", "14\" OPV Planter", "6 Pack Wave w/ Handle", "6 Pack Beacon Impatiens w/ Handle", "9\" Sunbuzz Sunflower", "12\" OPV Dahlia Planter", "12\" OPV Pollinator Hanging Basket + Planter"];
+// To show the official logo, paste it here as a data: URI (e.g. 'data:image/png;base64,...').
+const CT_LOGO='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAoCAMAAACyy+glAAAAkFBMVEVnDxLeERH/uLgLMx0FVyiNExZeYmOXo6P1eHj/x8d9h4fCv8H+/v7tJiYyNTXX2NjpFxcXp0rvOzsNFhIJCgnu6emnp6klJiZHR0hTVVZ0eXmFiIgShz0Zs09jZWWTlpa1ubrCx8f/1dULaCwWmESuGRy3xcXxWFj5h4cJIhMRdTXY5ubuSEj1a2v6lpb9p6cIfKU7AAAAMHRSTlP///////////////////////////////////////////////////////////////9Ppz/1AAABt0lEQVR42pWVh3LCMAyGw+hWbSeSE2eQAWEXeP+3qw2ldYIz+t8Bh+47RfktyR78Q54zyvlYWALE7PozAk5VuN+Hz8kouCQ6ZEThMKyrVVj7vr9nIPkAHBJDzHy/RmSYumBuab/yDyvffFb4YcV/4DBiluiw8K9aZGTHo9TAFW5+bZK6jOwO11RY/vFZoeG4WAaWnkzFRhl6dvxSMQ2rzXnyaWlN9eKad21HxfZo4CSGwA5PaD6br2ZzbMLyXZkXxHAprLDnPXmI+suz2QsnbuCK5M6mTSnr5n+xhai4+Zwy+GrRbcGzuh8KS2QvKt5K/D1BSZtpT2qxA6r+eiNEOHXS4ks/2m6kvOVf0zX9Uo2ui16WHamNa7IJczqenbQ46YNo93MawdZFBxDHj82vEnAlXobomBSJDv/ETt5ca4+VNv5VPLqWumcwVxC0aJmwroGNiqZ/YlqR7IJb/tmuOVZB0fBPu5b37Q2Vg+XaS9S/ZLB8+0ktzkfi/XBJcBsbMxzp0GJM7mMDiRreolEqhXFtg3IY1mN8mUxedfVj9rPunN3J+DLqTokZ5zEbewEljOXjb6sOfQPoumQjd6d7lQAAAABJRU5ErkJggg==';
+const ctBadge=()=>CT_LOGO?`<img class="ctb" src="${CT_LOGO}" alt="Canadian Tire" title="Grown for Canadian Tire">`:`<span class="ctb" title="Grown for Canadian Tire">Canadian Tire</span>`;
+// Proven Winners items get the PW logo (supplied by the grower).
+const PW_LOGO='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADkAAAAwCAMAAACcySJ/AAAAkFBMVEUqFR1fdkIfHh9mcSZWbDwhICBdYVkiIiJnmVNZcD5wjU5wjk48ejxYbz5RV0gA/wBqAAA/TjA6Qi5VAFVwjE3///8AAAAiICEgHh4bGxsgHiAkJCQdHR0gHh4gHSAgHR4eHh4eHh4gHh5ui01XbT0hHR06OjoeHR4gHh4gHSAgHiAfHR8gHiAhHCEgHiB1k1Fw4feVAAAAMHRSTlMZ+acR8tIFWxdbY6oElWgBAkT8A98BAP70EfoPK29y0k9rj/z9UQTzsVKPh6800P5GJ3DyAAAE1ElEQVR42p1W2ZLbOAykZNmeSSaT7AXxlEjZuo/5/7/bBiXLYyeVrVo+2BSJJkCgAVBQWKSWstU5hiyHsyGMItdYkmWqyC0S25CZAv3gLf7WMhVExi5a6jIUoSrzXC+eoTM281LwlGqNfWlpG03QvIO9H+RymY9xdV5ynVeE5RGTdJPl/ZL20bTasgiGZ6RoeK4WrXNHDSkJTWoVVZjedZLNj7Qh+6izWZfZMoWPNG/zet3HXOZhR9ZxLtap3pFUQupMBifLvNtk/YO5nRZ35F0ndTgm8Afc1YqXuCaOkPAb0KwHbsg2L+5I/sD6GZPknd54sQLy7q/+18hyPf7tRO2fl+RAJ3aRzOEwsQlI80ukhYO0OkH+S/Jxuf4RkT4HLSCyena9/Y4c4RT+YjcO/wD39ePjkl3TiExl0DcfVduFP+mMtx9YwtAL4y5JlrUmxrPjS0RzVbtFefftZK3oI/0qQ18Yd0muSXY8kwKLexrYFtjlmWKfkTKPQ5cDVr4y7nK5XpNjW24+sTIyBLcR9Gjt4Pu6ttGQDZhcrxk2ZppjsLvIKaPb5gl5I9cBpu7AKx8JnwiYGTBPEcyRPiFX3sYoHb6/XBiJgGS4ZoucNbKNruE0Vl1un5FbPDeVAGIkB7BOd/AJi7GPOnmkR6TemXD4+4OBGQMzZh3IY2+013qLHn3KzxX5Qi87ECpJwMJbloiSj7FPyFuWRWNXU6/JNywxi91O9Tbfjf0ZiZAkjMsAfGm4kNwqA4d0PyUiUd5i8RHR2q8fScRlrzgmZkm6C6f53dhVJ5JZLys1Tgk4lyTZt0MEEk17RrMn76cAOadLJJ6cRnV4hbIs+/aKBDlt0ruxzHy3FaaIFEVf9z2o1wd1en19PURdp8OtdtR3NeQVPVr7PN7eDvSfY0OahgzYdzi9HU7fHyWa3yJ/0qzMb1F3jJ+GYrDCTaEacBVbncOoVDfN8NCk5qlybhBiQk6bUJkHa2VhnDReC9Ud0SFQFutS9Vw+PIgqQ2Nmj1YDHtTu8Z4LvvPZSqIgaYwUKwfSQBWIvfTMF/KV9uTDI7ItxCBVL229BCrBJ0FpSU6S4kRuR18MOFQ5rebiEVl2rlBUy4GrzIqsShKyP3M45WD7MaqfSvukU56joyRNi6JuohUPtGN/yD5aC6Qqj/4JGe99bnHjDqosN21sidhKI9I4coIr/KPOuRxxtiqWGo511Ke962JWDDbuVkWRBjUVIMyThxQG4h5/I5lm+0ALpbCIv8+sEfR/h1BGQJW4TRqxqjVK3NVZC5VG2dUQNUflwmlvBjmTmrypFqEKjotdvEiPAg8YtJtl8j4NoEjhOsSo787jRO/vgt0qWhtDXrScvdxYR4GW3bHTUDG4BVlUIQ64otKj45n3s6BQcqgjP3kqQrdQU0GqlhXZDTkbxEqR1walBwaqWBO0mCdJbl6Rtmg0WgmQwua1QAy6pRg6BWThJoRdpWsBxKWOVTAycKVekRz/Ao3SE3wAoW5Q1ilY67aaGfKJkQLVdowtXK1IziS+ou+5lYTtnnA/shDtSEQira83o2e8vPjZhQwjUeEIsJ2KHt1tSdkm4Co1Qxz9UIFctl3fFMge4vuQqcraMO0agslVpf5iC+apCy6t8FpFNk2dGSo38YPoX4klBgU15I7CAAAAAElFTkSuQmCC';
+const pwBadge=()=>`<img class="pwb" src="${PW_LOGO}" alt="Proven Winners" title="Proven Winners">`;
+const ITEMS=[
+['4" Annual',10,80,640,2.65,0],['4" Vegetable',10,80,640,2.65,0],['4" Herb',10,80,640,2.65,0],['4" Ivy & Trailer',10,80,640,2.65,0],
+['4" Dracaena',10,80,240,2.65,0],['4" Strawberry',10,80,640,2.65,0],['4" Annual Grass',10,80,640,2.65,0],['4" Geranium',10,80,640,2.65,0],
+['4.5" Premium Annual',10,70,490,3.90,0],
+['5" OPV Annual',8,40,200,4.45,1],['5" Tall Geranium',8,48,288,4.45,1],['5" Citronella',8,48,288,4.45,1],
+['1 Quart Proven Winners',8,48,288,4.65,2],['1 Gal Proven Winners',6,27,108,7.55,2],['1 Gal Assorted Annual',6,27,108,7.15,2],
+['1 Gal Patio Veg',6,27,108,6.00,2],['1 Gal Perennial',6,27,108,7.15,2],
+['6 Pack Annual',6,36,288,2.95,3],['6 Pack Vegetable',6,36,252,2.95,3],['6 Pack Jumbo Annual w/ Handle',3,24,168,8.35,3],
+['6 Pack Wave w/ Handle',3,24,144,8.50,3],['6 Pack Beacon Impatiens w/ Handle',3,24,144,8.35,3],
+['10" Citronella Hanging Basket',1,12,60,11.85,4],['10" Strawberry Hanging Basket',1,12,60,13.60,4],['10" Every Day Hanging Basket',1,12,60,11.85,4],
+['10" Canada Day Hanging Basket',1,12,60,11.85,4],['11" Hanging Basket',1,10,50,14.89,4],['12" OPV Hanging Basket',1,10,40,19.50,4],
+['14" Hanging Basket',1,6,24,30.45,4],['12" OPV Pollinator Hanging Basket + Planter',1,10,40,19.50,7],
+['10" Every Day Planter',1,14,56,12.85,5],['12" OPV Planter',1,10,40,19.50,5],['14" OPV Planter',1,7,21,30.45,5],
+['16" Premium Deco Planter',1,3,12,37.50,5],['12" OPV Dahlia Planter',1,10,40,17.50,7],['9" Sunbuzz Sunflower',1,14,56,11.85,7],
+['10" Patio Vegetable w/ Cage',1,12,36,12.25,5],['12" Vegetable Planter w/ Cage',1,10,30,14.25,5],
+['18" Coco Hanging Basket',1,4,12,39.45,6],['14" Coco Hanging Basket',1,8,24,35.45,6],['12" Coco Hanging Basket',1,10,40,25.45,6]
+].map(([name,flat,shelf,cart,price,g],id)=>({id,name,flat,shelf,cart,price,g,prog:g===7,step:g===7?cart:shelf,ct:CT.includes(name),pw:/proven winners/i.test(name)}));
+
+const $=s=>document.querySelector(s);
+const money=v=>'$'+v.toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const money0=v=>'$'+Math.round(v).toLocaleString('en-CA');
+const num=v=>v.toLocaleString('en-CA');
+const c1=v=>v>0&&v<.05?'<0.1':(Math.round(v*10)/10).toLocaleString('en-CA',{minimumFractionDigits:1,maximumFractionDigits:1});
+const col=g=>`var(--s${g})`;
+const esc=s=>s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+let qty=ITEMS.map(()=>0), cap=20, filter=-1, onlyCT=false, onlyMine=false, query='';
+try{const s=JSON.parse(localStorage.getItem('cartcalc')||'null');if(s&&s.v===2&&s.q&&s.q.length===ITEMS.length){qty=s.q;cap=s.cap===40?40:20}}catch(e){}
+const save=()=>{try{localStorage.setItem('cartcalc',JSON.stringify({v:2,q:qty,cap}))}catch(e){}};
+
+function totals(){
+  const g=GROUPS.map(()=>({carts:0,value:0}));let carts=0,value=0;
+  ITEMS.forEach(it=>{const q=qty[it.id]||0,c=q/it.cart,v=q*it.price;g[it.g].carts+=c;g[it.g].value+=v;carts+=c;value+=v});
+  const trucks=Math.max(1,Math.ceil(carts/cap-1e-9));
+  return {g,carts,value,trucks,left:Math.max(0,trucks*cap-carts)};
+}
+
+// ---------- product list ----------
+$('#chips').innerHTML=['All',...GROUPS].map((n,i)=>`<button class="chip" type="button" data-f="${i-1}" aria-pressed="${i===0}">${esc(n)}</button>`).join('');
+function renderList(){
+  const html=GROUPS.map((gn,g)=>{
+    if(filter>=0&&filter!==g)return '';
+    const rows=ITEMS.filter(it=>it.g===g&&(!onlyMine||qty[it.id]>0)&&(!onlyCT||it.ct)&&(!query||it.name.toLowerCase().includes(query)));
+    if(!rows.length)return '';
+    return `<div class="grp"><h2><span class="dot" style="background:${col(g)}"></span>${esc(gn)}<small id="gs${g}"></small></h2>${rows.map(it=>`
+      <div class="row" id="r${it.id}">
+        <div><div class="nm">${esc(it.name)}${it.ct?ctBadge():''}${it.pw?pwBadge():''}</div><div class="meta">${it.prog?`Sold by the full cart (${num(it.cart)} per cart) · ${money(it.price)} each · ${money(it.price*it.cart)} per cart`:`${money(it.price)} each${it.flat>1?` · ${it.flat} per flat`:''} · ${it.shelf} per shelf · ${num(it.cart)} per cart`}</div></div>
+        <div class="step"><button type="button" data-d="-1" data-id="${it.id}" aria-label="Remove ${it.prog?'a cart':'a shelf'} of ${esc(it.name)}">−</button><input type="number" min="0" step="${it.step}" inputmode="numeric" id="q${it.id}" data-id="${it.id}" aria-label="Units of ${esc(it.name)}"><button type="button" data-d="1" data-id="${it.id}" aria-label="Add ${it.prog?'a cart':'a shelf'} of ${esc(it.name)}">+</button></div>
+        <div class="out"><b id="v${it.id}"></b><span id="c${it.id}"></span></div>
+        <div class="mini"><i id="m${it.id}" style="background:${col(g)}"></i></div>
+      </div>`).join('')}</div>`;
+  }).join('');
+  $('#list').innerHTML=html||`<p class="empty">No plants match. ${onlyMine||onlyCT?'Turn off the filters above to see the full list.':'Try a different search.'}</p>`;
+  ITEMS.forEach(it=>{const el=$('#q'+it.id);if(el)el.value=qty[it.id]||''});
+  update();
+}
+
+// ---------- trucks ----------
+const svg=$('#trucks');
+function drawTrucks(t){
+  // Top-down view, one shared scale. u = cart length (along the truck); carts sit 4 across, each 0.42u wide
+  // (about a 1350 x 565 mm Danish cart). Two 5-tons fit side by side in the width of one dry van rig.
+  const W=svg.clientWidth||800, van=cap===40, u=W/14.6, cw=u*.42, cols=cap/4;
+  const wall=Math.max(2,u*.05), bodyW=cols*u+wall*2, bodyH=cw*4+wall*2, cabL=van?2.6*u:1.5*u, gapC=van?0.3*u:0.08*u, rigW=bodyW+gapC+cabL;
+  const pad=Math.max(1,Math.min(3,u*.04)), perRow=van?1:2, show=Math.min(t.trucks,4), rows=Math.ceil(show/perRow);
+  const tyre=Math.max(3,cw*.28), rowH=bodyH+tyre*2+30, H=rows*rowH+2+(t.trucks>show?24:0);
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.style.height=H+'px';
+  const segs=[];let p=0;t.g.forEach((gr,g)=>{if(gr.carts>0){segs.push([p,p+gr.carts,g]);p+=gr.carts}});
+  const body='rgba(255,255,255,.88)', glass='#17432d';
+  const tyres=(x,y,h)=>{const tw=Math.max(8,u*.42);return `<rect x="${x-tw/2}" y="${y-tyre}" width="${tw}" height="${tyre}" rx="2" fill="#0a1d13" stroke="rgba(255,255,255,.45)"/><rect x="${x-tw/2}" y="${y+h}" width="${tw}" height="${tyre}" rx="2" fill="#0a1d13" stroke="rgba(255,255,255,.45)"/>`};
+  let out='';
+  for(let k=0;k<show;k++){
+    const tx=1+(k%perRow)*(rigW+.9*u), y=tyre+2+Math.floor(k/perRow)*rowH, cx=tx+bodyW+gapC;
+    // wheels first so the body sits on top
+    if(van){out+=tyres(tx+u*.9,y,bodyH)+tyres(tx+u*1.5,y,bodyH)+tyres(cx-u*.05,y,bodyH)+tyres(cx+u*.55,y,bodyH)+tyres(cx+cabL*.82,y,bodyH)}
+    else{out+=tyres(tx+u*1.4,y,bodyH)+tyres(tx+u*2,y,bodyH)+tyres(cx+cabL*.62,y,bodyH)}
+    out+=`<rect x="${tx}" y="${y}" width="${bodyW}" height="${bodyH}" rx="${wall*2}" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.6)" stroke-width="${wall}"/>`;
+    // cab from above: roof, windshield band, mirrors; the tractor also has a narrower hood
+    const cabRoof=van?cabL*.58:cabL*.78, inset=bodyH*.04, mir=Math.max(3,cw*.22);
+    out+=`<rect x="${cx}" y="${y+inset}" width="${cabRoof}" height="${bodyH-inset*2}" rx="${u*.08}" fill="${body}"/>`;
+    out+=`<rect x="${cx+cabRoof-u*.22}" y="${y+inset*2}" width="${u*.16}" height="${bodyH-inset*4}" rx="2" fill="${glass}" opacity=".55"/>`;
+    out+=`<rect x="${cx+cabRoof-u*.2}" y="${y+inset-mir}" width="${u*.06+2}" height="${mir}" fill="${body}"/><rect x="${cx+cabRoof-u*.2}" y="${y+bodyH-inset}" width="${u*.06+2}" height="${mir}" fill="${body}"/>`;
+    if(van)out+=`<rect x="${cx+cabRoof}" y="${y+bodyH*.16}" width="${cabL-cabRoof}" height="${bodyH*.68}" rx="${u*.12}" fill="${body}"/><rect x="${cx+cabRoof+u*.1}" y="${y+bodyH*.3}" width="${(cabL-cabRoof)*.6}" height="${bodyH*.4}" rx="3" fill="${glass}" opacity=".18"/>`;
+    for(let s=0;s<cap;s++){
+      const idx=k*cap+s, c=Math.floor(s/4), r=s%4;
+      const sx=tx+wall+bodyW-wall*2-(c+1)*u+pad, sy=y+wall+r*cw+pad, w=u-pad*2, h=cw-pad*2;
+      out+=`<g><title>Cart ${idx+1}</title><rect x="${sx}" y="${sy}" width="${w}" height="${h}" rx="2" fill="none" stroke="rgba(255,255,255,.28)" stroke-dasharray="3 3"/>`;
+      let filled=0;
+      segs.forEach(([a,b,g])=>{const lo=Math.max(a,idx),hi=Math.min(b,idx+1);if(hi>lo){const fw=(hi-lo)*w;out+=`<rect x="${sx+w-filled-fw}" y="${sy}" width="${fw}" height="${h}" fill="${col(g)}"/>`;filled+=fw}});
+      out+='</g>';
+    }
+    out+=`<text x="${tx}" y="${y+bodyH+tyre+18}" fill="rgba(255,255,255,.75)" font-size="13" font-family="Figtree,sans-serif">Truck ${k+1} · ${c1(Math.min(cap,Math.max(0,t.carts-k*cap)))} of ${cap}${W<520?'':' carts'}</text>`;
+  }
+  if(t.trucks>show)out+=`<text x="2" y="${H-6}" fill="#ffd28a" font-size="14" font-family="Figtree,sans-serif">+ ${t.trucks-show} more truck${t.trucks-show>1?'s':''}</text>`;
+  svg.innerHTML=out;
+}
+
+// ---------- update everything ----------
+let last;
+function update(){
+  const t=totals(); last=t;
+  const tName=cap===20?'5-ton':'dry van';
+  const W=['zero','one','two','three','four','five','six','seven','eight','nine','ten'], nT=W[t.trucks]||t.trucks;
+  $('#headline').innerHTML=t.carts>0?`Your order fills <b>${c1(t.carts)} carts</b> — ${nT} ${tName} truck${t.trucks>1?'s':''}`:'Add plants to see how your order packs';
+  $('#sValue').textContent=money(t.value);$('#sCarts').textContent=c1(t.carts);
+  $('#sTrucks').textContent=c1(t.carts/cap)+' × '+(cap===20?'5 ton':'dry van');
+  $('#sLeft').textContent=c1(t.left)+' carts';
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.truck===cap));
+  $('#legend').innerHTML=GROUPS.map((n,g)=>t.g[g].carts>0?`<span><i style="background:${col(g)}"></i>${esc(n)}</span>`:'').join('');
+  drawTrucks(t);
+  ITEMS.forEach(it=>{
+    const q=qty[it.id]||0, r=$('#r'+it.id); if(!r)return;
+    r.classList.toggle('on',q>0);
+    $('#v'+it.id).textContent=q?money(q*it.price):'—';
+    $('#c'+it.id).textContent=q?`${c1(q/it.cart)}\u00a0carts${it.prog?'':` · ${num(+(q/it.shelf).toFixed(1))}\u00a0shel${q/it.shelf===1?'f':'ves'}`}`:'';
+    // bar shows how full this item's current cart is; it starts again after each full cart
+    { const c=q/it.cart, f=c-Math.floor(c+1e-9); $('#m'+it.id).style.width=(q>0?(f<1e-9?100:f*100):0)+'%'; }
+  });
+  GROUPS.forEach((n,g)=>{const el=$('#gs'+g);if(el)el.textContent=t.g[g].carts>0?`${c1(t.g[g].carts)} carts`:''});
+  $('#bar').innerHTML=t.carts>0?GROUPS.map((n,g)=>t.g[g].carts>0?`<i style="flex-grow:${t.g[g].carts};background:${col(g)}" data-tip="${esc(n)}: ${c1(t.g[g].carts)} carts · ${money0(t.g[g].value)}"></i>`:'').join(''):'';
+  $('#sumRows').innerHTML=GROUPS.map((n,g)=>t.g[g].carts>0?`<tr><td><span class="dot" style="background:${col(g)}"></span>${esc(n)}</td><td class="n">${c1(t.g[g].carts)} carts</td><td class="n">${money0(t.g[g].value)}</td></tr>`:'').join('')||'<tr><td colspan="3" class="empty">Nothing added yet.</td></tr>';
+  $('#fCarts').textContent=c1(t.carts)+' carts';$('#fValue').textContent=money(t.value);
+  { const mb=$('#mbar'), sb=$('#summary').getBoundingClientRect();
+    mb.classList.toggle('on',t.carts>0&&sb.top>innerHeight);
+    $('#mbarTxt').textContent=`${c1(t.carts)} carts · ${money0(t.value)}`; }
+  renderAdvice(t); renderFor(); save(); refreshMail();
+}
+
+function topUps(t){ // items that bring the total closest to a whole number of carts, in whole shelves
+  // never go past the next whole cart: round shelves down
+  const next=Math.ceil(t.carts-1e-9), gap=next-t.carts;
+  return ITEMS.filter(it=>!it.prog).map(it=>{const add=Math.floor(gap*it.cart/it.shelf+1e-9)*it.shelf,res=t.carts+add/it.cart;return{it,add,res,off:next-res}})
+    .filter(o=>o.add>0).sort((a,b)=>a.off-b.off||b.add-a.add);
+}
+function renderAdvice(t){
+  const box=$('#advice'), tName=cap===20?'5-ton truck':'dry van';
+  if(t.carts===0){box.innerHTML='<p>Pick quantities on the left. Each + adds one full shelf, and the trucks above fill as you go.</p>';return}
+  const frac=t.carts-Math.floor(t.carts), whole=frac<1e-6||frac>1-1e-6, next=Math.ceil(t.carts-1e-9);
+  const truck=t.left<0.05?'Every truck is full.':`Room for ${c1(t.left)} more carts on ${t.trucks>1?'truck '+t.trucks:'your '+tName}.`;
+  let h;
+  if(whole) h=`<p><strong>Every cart is full</strong> (${Math.round(t.carts)} cart${Math.round(t.carts)===1?'':'s'}). ${truck}</p>`;
+  else{
+    const ups=topUps(t), pct=Math.round(frac*100);
+    if(!ups.length) h=`<p><strong>Your carts are as full as whole shelves allow</strong> (${c1(t.carts)} carts). ${truck}</p>`;
+    else{
+      const opts=ups.slice(0,30).map(o=>`<option value="${o.it.id}" data-add="${o.add}">${esc(o.it.name)} (+${num(o.add)} → ${c1(o.res)} carts)</option>`).join('');
+      const trim=frac<0.5&&next>1?`, or trim about ${c1(frac)} of a cart to round down to ${next-1}`:'';
+      h=`<p><strong>Your ${next>1?'last ':''}cart is ${pct}% full.</strong> Top it up to ${next} cart${next>1?'s':''}${trim}.</p>`+
+        `<div class="fill"><select id="fillSel" aria-label="Item to top up with">${opts}</select><button class="btn" id="fillBtn" type="button">Fill cart</button></div>`+
+        `<p style="margin:10px 0 0;font-size:14px;color:var(--muted)">${truck}</p>`;
+    }
+  }
+  box.innerHTML=h;
+  const btn=$('#fillBtn'); if(btn)btn.onclick=()=>{const sel=$('#fillSel'),it=ITEMS[+sel.value];qty[it.id]=(qty[it.id]||0)+(+sel.selectedOptions[0].dataset.add);syncInput(it.id);update()};
+}
+function syncInput(id){const el=$('#q'+id);if(el)el.value=qty[id]||''}
+
+// ---------- events ----------
+$('#list').addEventListener('click',e=>{const b=e.target.closest('button[data-d]');if(!b)return;const it=ITEMS[+b.dataset.id];
+  const cur=qty[it.id]||0, d=+b.dataset.d;
+  qty[it.id]=Math.max(0,d>0?Math.floor(cur/it.step)*it.step+it.step:Math.ceil(cur/it.step)*it.step-it.step);syncInput(it.id);update()});
+$('#list').addEventListener('input',e=>{const el=e.target;if(!el.dataset.id)return;const v=Math.max(0,Math.round(+el.value||0));qty[+el.dataset.id]=v;update()});
+$('#list').addEventListener('change',e=>{const el=e.target;if(!el.dataset.id)return;const it=ITEMS[+el.dataset.id];const v=qty[it.id]||0;qty[it.id]=v?Math.ceil(v/it.step)*it.step:0;syncInput(it.id);update()});
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;filter=+b.dataset.f;document.querySelectorAll('#chips .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));renderList()});
+$('#onlyCT').onclick=e=>{onlyCT=!onlyCT;e.currentTarget.setAttribute('aria-pressed',onlyCT);renderList()};
+$('#onlyMine').onclick=e=>{onlyMine=!onlyMine;e.currentTarget.setAttribute('aria-pressed',onlyMine);renderList()};
+$('#q').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();renderList()});
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{cap=+b.dataset.truck;update()});
+$('#clear').onclick=()=>{qty=ITEMS.map(()=>0);renderList()};
+// ---------- sending & exporting ----------
+// Where "Email order" sends to. Put your order desk address between the quotes.
+const ORDER_EMAIL='caleb@vdmgarden.ca';
+const who=$('#who');
+{ // shipping season: ISO weeks 15–26, each with the date its Monday next falls on
+  const mondayOf=(y,w)=>{const j4=new Date(Date.UTC(y,0,4)),d=(j4.getUTCDay()+6)%7;return new Date(Date.UTC(y,0,4-d+(w-1)*7))};
+  const weeksIn=y=>{const d=new Date(Date.UTC(y,11,28));const j4=new Date(Date.UTC(y,0,4));return Math.round((d-mondayOf(y,1))/6048e5)+1};
+  const now=new Date(),y=now.getFullYear(),today=Date.UTC(y,now.getMonth(),now.getDate());
+  let o='';for(let w=15;w<=26;w++){
+    let yy=y,m=w<=weeksIn(y)?mondayOf(y,w):null;
+    if(!m||m.getTime()+6*864e5<today){yy=y+1;m=w<=weeksIn(yy)?mondayOf(yy,w):null}
+    if(!m)continue;
+    o+=`<option value="${w}">Week ${w} · ${m.toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})}</option>`}
+  $('#weekSel').insertAdjacentHTML('beforeend',o);
+}
+let info={};try{info=JSON.parse(localStorage.getItem('cartcalc-who')||'{}')}catch(e){}
+for(const el of who.elements)if(el.name&&info[el.name])el.value=info[el.name];
+const truckLabel=()=>cap===20?'5 ton (20 carts)':'Dry van (40 carts)';
+function orderText(){
+  const t=last, f=Object.fromEntries(new FormData(who));
+  const lines=ITEMS.filter(it=>qty[it.id]>0).map(it=>`${it.name}: ${num(qty[it.id])} (${it.prog?c1(qty[it.id]/it.cart)+(qty[it.id]===it.cart?' cart':' carts'):num(qty[it.id]/it.shelf)+(qty[it.id]/it.shelf===1?' shelf':' shelves')}, ${money(qty[it.id]*it.price)})`);
+  const head=[['Name',f.name],['Store',f.business],['Phone',f.phone],['Email',f.email],['Delivery week',f.week?'Week '+f.week:'']].filter(r=>r[1]).map(r=>r.join(': '));
+  return `Cart order\n${head.length?head.join('\n')+'\n':''}\n${lines.join('\n')}\n\nOrder total: ${money(t.value)}\nCarts: ${c1(t.carts)}\nTrucks: ${c1(t.carts/cap)} × ${truckLabel()}${f.notes?'\n\nNotes: '+f.notes:''}`;
+}
+function refreshMail(){
+  const f=Object.fromEntries(new FormData(who));
+  const subj=`Cart order${f.business?' – '+f.business:f.name?' – '+f.name:''}`;
+  const mk=body=>`mailto:${ORDER_EMAIL}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  let href=mk(orderText()); mailLong=false;
+  if(href.length>1800){ // some mail programs (e.g. Outlook on Windows) cut off longer links
+    mailLong=true; const t=last, n=qty.filter(q=>q>0).length;
+    const head=[['Name',f.name],['Store',f.business],['Phone',f.phone],['Email',f.email],['Delivery week',f.week?'Week '+f.week:'']].filter(r=>r[1]).map(r=>r.join(': ')).join('\n');
+    href=mk(`Cart order\n${head}\n\n${n} items · ${money(t.value)} · ${c1(t.carts)} carts\n\nFULL ORDER (paste below — it was copied for you when you pressed Email order):\n\n`);
+  }
+  $('#mail').href=href;
+}
+let mailLong=false;
+const note=m=>{$('#sendNote').textContent=m};
+who.addEventListener('input',()=>{try{localStorage.setItem('cartcalc-who',JSON.stringify(Object.fromEntries(new FormData(who))))}catch(e){}refreshMail()});
+who.addEventListener('submit',e=>e.preventDefault());
+const hasOrder=()=>qty.some(q=>q>0);
+$('#mail').addEventListener('click',e=>{
+  if(!hasOrder()){e.preventDefault();note('Add some plants to your order first.');return}
+  if(missingWho()){e.preventDefault();return}
+  refreshMail();
+  const full=orderText(); let copied=false;
+  try{navigator.clipboard.writeText(full).then(()=>{copied=true},()=>{})}catch(err){}
+  note(mailLong
+    ?`Your order is long, so your email app opens with a short summary. The full order has been copied: paste it into the email (Ctrl+V or ⌘V), or attach the .xlsx download. Send to ${ORDER_EMAIL}.`
+    :`Your email app should open with the order filled in, addressed to ${ORDER_EMAIL}. If it doesn't, press “Copy order summary” and paste it into an email to ${ORDER_EMAIL}.`);
+});
+
+// ---------- who the order is for ----------
+function renderFor(){
+  const f=Object.fromEntries(new FormData(who)), el=$('#orderFor');
+  if(f.name||f.business){el.className='for';el.innerHTML=`Order for <strong>${esc(f.name||'')}</strong>${f.name&&f.business?' · ':''}${esc(f.business||'')}`}
+  else{el.className='for none';el.innerHTML='<a href="#custH">Add your name and store</a> so this order is attributed to you.'}
+}
+function missingWho(){
+  const bad=[...who.querySelectorAll('[required]')].filter(i=>!i.value.trim());
+  bad.forEach(i=>i.classList.add('bad'));
+  if(bad.length){note('Please add your name and store in Customer details first.');bad[0].scrollIntoView({block:'center',behavior:'smooth'});bad[0].focus({preventScroll:true});return true}
+  return false;
+}
+who.addEventListener('input',e=>{e.target.classList.remove('bad');renderFor()});
+$('#copy').onclick=async e=>{
+  const b=e.currentTarget;try{await navigator.clipboard.writeText(orderText());b.textContent='Copied ✓'}catch(err){b.textContent='Copy not allowed here'}setTimeout(()=>b.textContent='Copy order summary',1800)};
+
+// .xlsx: a small built-in writer (one sheet, formulas, number formats, stored zip). No outside library.
+const XL={
+  esc:v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
+  col:n=>{let s='';n++;while(n){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=(n-m-1)/26}return s},
+  crcT:(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})(),
+  crc(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=XL.crcT[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0},
+  zip(files){ // files: [[name, string]] -> Uint8Array, stored (no compression)
+    const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+    for(const[name,text]of files){
+      const nb=enc.encode(name),db=enc.encode(text),crc=XL.crc(db),h=new DataView(new ArrayBuffer(30));
+      h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint32(14,crc,true);h.setUint32(18,db.length,true);h.setUint32(22,db.length,true);h.setUint16(26,nb.length,true);
+      parts.push(new Uint8Array(h.buffer),nb,db);
+      const c=new DataView(new ArrayBuffer(46));
+      c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint32(16,crc,true);c.setUint32(20,db.length,true);c.setUint32(24,db.length,true);c.setUint16(28,nb.length,true);c.setUint32(42,off,true);
+      cd.push(new Uint8Array(c.buffer),nb);off+=30+nb.length+db.length;
+    }
+    const cdLen=cd.reduce((n,x)=>n+x.length,0),e=new DataView(new ArrayBuffer(22));
+    e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cdLen,true);e.setUint32(16,off,true);
+    const all=[...parts,...cd,new Uint8Array(e.buffer)],out=new Uint8Array(all.reduce((n,x)=>n+x.length,0));let p=0;for(const x of all){out.set(x,p);p+=x.length}return out;
+  },
+  // rows: arrays of cells; a cell is a string, a number, or {v, f (formula), s (style id)}
+  book(rows,widths){
+    const sd=rows.map((r,i)=>`<row r="${i+1}">${r.map((c,j)=>{
+      if(c===''||c==null)return'';const ref=XL.col(j)+(i+1),o=typeof c==='object'?c:{v:c},st=o.s?` s="${o.s}"`:'';
+      if(o.f!=null)return`<c r="${ref}"${st}><f>${XL.esc(o.f)}</f><v>${o.v}</v></c>`;
+      if(typeof o.v==='number')return`<c r="${ref}"${st}><v>${o.v}</v></c>`;
+      return`<c r="${ref}"${st} t="inlineStr"><is><t xml:space="preserve">${XL.esc(o.v)}</t></is></c>`}).join('')}</row>`).join('');
+    const cols=`<cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols>`;
+    const NS='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+    return XL.zip([
+      ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+      ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+      ['xl/workbook.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook ${NS}><sheets><sheet name="Order" sheetId="1" r:id="rId1"/></sheets><calcPr fullCalcOnLoad="1"/></workbook>`],
+      ['xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+      ['xl/styles.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="4"><numFmt numFmtId="164" formatCode="0.0"/><numFmt numFmtId="165" formatCode="&quot;$&quot;#,##0.00"/><numFmt numFmtId="166" formatCode="#,##0"/><numFmt numFmtId="167" formatCode="0.00"/></numFmts><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="9"><xf/><xf numFmtId="164" applyNumberFormat="1"/><xf numFmtId="165" applyNumberFormat="1"/><xf numFmtId="166" applyNumberFormat="1"/><xf numFmtId="167" applyNumberFormat="1"/><xf fontId="1" applyFont="1"/><xf numFmtId="164" fontId="1" applyNumberFormat="1" applyFont="1"/><xf numFmtId="165" fontId="1" applyNumberFormat="1" applyFont="1"/><xf fontId="2" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
+      ['xl/worksheets/sheet1.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet ${NS}>${cols}<sheetData>${sd}</sheetData></worksheet>`]
+    ]);
+  }
+};
+// style ids: 1 0.0 · 2 $ · 3 #,##0 · 4 0.00 · 5 bold · 6 bold 0.0 · 7 bold $ · 8 title
+function buildSheet(){
+  const f=Object.fromEntries(new FormData(who)), rows=ITEMS.filter(it=>qty[it.id]>0), B=v=>({v,s:5});
+  const aoa=[[{v:'Cart order'+(f.business?' – '+f.business:f.name?' – '+f.name:''),s:8}],[B('Date'),new Date().toLocaleDateString('en-CA')],[B('Name'),f.name||''],[B('Store or business'),f.business||''],[B('Phone'),f.phone||''],[B('Email'),f.email||''],[B('Delivery week'),f.week?'Week '+f.week:''],[B('Notes'),f.notes||''],[B('Truck'),truckLabel()],[],
+    ['Item','Program','Units','Units / shelf','Units / cart','Shelves','Carts','Price / unit','Value'].map(B)];
+  const first=aoa.length+1;
+  rows.forEach((it,k)=>{const r=first+k,q=qty[it.id];aoa.push([it.name,[it.prog?'In/Out cart':'',it.ct?'Canadian Tire':''].filter(Boolean).join(' · '),{v:q,s:3},it.shelf,it.cart,{f:`C${r}/D${r}`,v:q/it.shelf,s:1},{f:`C${r}/E${r}`,v:q/it.cart,s:1},{v:it.price,s:2},{f:`C${r}*H${r}`,v:+(q*it.price).toFixed(2),s:2}])});
+  const lastR=first+rows.length-1, tr=lastR+1;
+  aoa.push([B('Total'),'','','','','',{f:`SUM(G${first}:G${lastR})`,v:last.carts,s:6},'',{f:`SUM(I${first}:I${lastR})`,v:+last.value.toFixed(2),s:7}]);
+  aoa.push([B('Trucks needed'),'','','','','',{f:`G${tr}/${cap}`,v:last.carts/cap,s:4}]);
+  return XL.book(aoa,[44,14,9,12,12,9,9,12,13]);
+}
+let dlP=Promise.resolve(null);
+try{if(window.claude&&typeof window.claude.use==='function')dlP=Promise.resolve().then(()=>window.claude.use('downloads')).catch(()=>null)}catch(e){}
+$('#xlsx').onclick=async e=>{
+  if(!hasOrder()){note('Add some plants to your order first.');return}
+  if(missingWho())return;
+  const b=e.currentTarget;b.disabled=true;b.textContent='Preparing…';
+  const f=Object.fromEntries(new FormData(who));
+  const filename=`Cart order${f.business?' - '+f.business.replace(/[\\/:*?"<>|]/g,''):''} ${new Date().toLocaleDateString('en-CA')}.xlsx`;
+  try{
+    const data=buildSheet();
+    const dl=await dlP;
+    if(dl){await dl.save({filename,data});note('Saved. Attach the file to an email to send your order.')}
+    else{const url=URL.createObjectURL(new Blob([data],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);note('Download started. Attach the file to an email to send your order.')}
+  }catch(err){
+    const c=err&&err.code;
+    note(c==='declined'?'Download cancelled.':c==='rate_limited'?'A download is already waiting for your OK. Try again in a moment.':'Download isn’t available here. Use “Copy order summary” instead.');
+  }finally{b.disabled=false;b.textContent='Download .xlsx'}
+};
+const tip=$('#tip');
+$('#bar').addEventListener('pointermove',e=>{const s=e.target.dataset.tip;if(!s){tip.style.opacity=0;return}tip.textContent=s;tip.style.opacity=1;
+  const x=Math.min(e.clientX+12,innerWidth-tip.offsetWidth-8);tip.style.left=x+'px';tip.style.top=(e.clientY-36)+'px'});
+$('#bar').addEventListener('pointerleave',()=>tip.style.opacity=0);
+addEventListener('scroll',()=>{const mb=$('#mbar');if(last)mb.classList.toggle('on',last.carts>0&&$('#summary').getBoundingClientRect().top>innerHeight)},{passive:true});
+renderList();
+if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(last)drawTrucks(last)});ro.observe(svg)}
+else addEventListener('resize',()=>{if(last)drawTrucks(last)});
+}
+</script>
+</body>
+</html>
